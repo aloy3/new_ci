@@ -1,19 +1,35 @@
-- name: rsync deployments
-  # You may pin to the exact commit or the version.
-  # uses: contention/rsync-deployments@10f98a8726e6760601d8818ea6ff812f87bf8a97
-  uses: contention/rsync-deployments@v2.0.0
-  with:
-    # Initial/required rsync flags
-    flags: 
-    # Exclude flags and directory pairs
-    excludes: 
-    # The server user
-    user: 
-    # The deployment target
-    host: 
-    # The local path to sync
-    localpath: 
-    # The remote path to sync
-    remotepath: 
-    # The private key
-    deploy_key: 
+name: Laravel Deploy
+
+on:
+  push:
+    branches:
+      - main  # Replace with your branch name
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+
+    - name: Install dependencies
+      run: composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+    - name: Generate application key
+      run: php artisan key:generate --ansi
+
+    - name: Run database migrations
+      run: php artisan migrate --force
+
+    - name: Clear cache
+      run: php artisan cache:clear
+
+    - name: Deploy to server
+      run: |
+        ssh user@your-server-ip 'cd /path/to/your/laravel/app && git pull origin main && composer install --no-dev --prefer-dist --no-progress --no-interaction && php artisan migrate --force && php artisan cache:clear'
